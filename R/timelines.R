@@ -1,31 +1,20 @@
-plotTimeline.ID.From.CSV<-function( nomeFile,  IDToPlot, IDName, EVENTName, DATAName = NA ) {
-  # crea un oggetto 'loader'
-  obj.L<-dataLoader()
-  # di' al loader di caricare un file CSV usando le due colonne indicate per l'ID e l'EVENTO
-  obj.L$load.csv(nomeFile = nomeFile,IDName = IDName,EVENTName = EVENTName)
-  datiDaElaborare<-obj.L$getData()
-  
-  patientSubList <- datiDaElaborare$pat.process[[as.character(IDToPlot)]]
+#' Plot a patient's timeline
+#' 
+#' @description  it plot a patient's timeline given an event log well formatted in the input eventTable
+#' @param eventTable a table containing the event logs. The table has to have as columnName \code{c('DATA','EVENT')}.
+#' @param output.format.date the format of the passed date. The default value is \code{' d / m / Y' }
+#' @param cex.axis cex for timeline-text
+#' @param cex.text cex for event-text 
+#' @import graphics
+#' @export
+plotTimeline<-function( eventTable , output.format.date = "%d/%m/%Y" ,cex.axis = 0.6, cex.text = 0.7) {
 
-  matrice<-c()
-  matrice<-cbind( matrice,  as.character(patientSubList[[DATAName]]), as.character(patientSubList[[EVENTName]])   )
-
-  plotTimeline( eventTable = matrice )
-}
-
-plotTimeline<-function( eventTable , dataSep='/' ) {
-  
-  #   eventTable<-c("2001-01-10","RX torace")
-  #   eventTable<-rbind(eventTable, c("2001-05-10","CT torace")   )
-  #   eventTable<-rbind(eventTable,   c("2002-05-10","Dieta")   )
   colnames(eventTable)<-c("DATA","DES");
   df<-as.data.frame(eventTable)
   
   df$DATA<-as.character.factor(df$DATA)
   
-  if ( dataSep == "-") df$YM <- as.Date(df$DATA, format="%Y-%m-%d")
-  if ( dataSep == "/") df$YM <- as.Date(df$DATA, format="%Y/%m/%d")
-  if ( dataSep == ":") df$YM <- as.Date(df$DATA, format="%Y:%m:%d")
+  df$YM <- as.Date(df$DATA, format=output.format.date)
   
   rangeYM <- range(df$YM)
   
@@ -39,8 +28,8 @@ plotTimeline<-function( eventTable , dataSep='/' ) {
   axis.Date(
     1,
     at=seq.Date(rangeYM[1],rangeYM[2],by="month"),
-    format="%Y-%m",
-    cex.axis=0.6,
+    format=output.format.date,
+    cex.axis=cex.axis,
     pos=0,
     lwd=0,
     lwd.tick=2,
@@ -52,7 +41,7 @@ plotTimeline<-function( eventTable , dataSep='/' ) {
   par(xpd=NA)
   text(
     df$YM, y=ypts,
-    labels=paste(df$DES,df$DATA,sep="\n"), cex=0.7, pos=txtpts
+    labels=paste(df$DES,df$DATA,sep="\n"), cex=cex.text, pos=txtpts
   )
   par(xpd=FALSE)
   

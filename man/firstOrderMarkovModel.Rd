@@ -2,79 +2,75 @@
 % Please edit documentation in R/firstOrderMarkovModel.R
 \name{firstOrderMarkovModel}
 \alias{firstOrderMarkovModel}
-\title{firstOrderMarkovModel class}
+\title{A class to train First Order Markov Models}
 \usage{
 firstOrderMarkovModel(parameters.list = list())
 }
 \arguments{
-\item{parameters.list}{a list containing possible parameters to tune the model. The admitted element of the input list are:
-\itemize{
- \item \code{threshold } a number between 0 and 1 (default is 0). In the graph, arcs with a probability under the threshold will be removed;
- \item \code{considerAutoLoop } a boolean parameter (default is \code{TRUE}). If \code{FALSE} the arcs outcoming and incoming in the same node will be removed.
-}}
+\item{parameters.list}{a list containing the parameters. The possible ones are: 'considerAutoLoop' and 'threshold'. 'considerAutoLoop' is a boolean which indicates if the autoloops have to be admitted, while 'threshold' is the minimum value that a probability should have to do not be set to zero, in the transition matrix.}
 }
 \description{
 This is an implementation of the First Order Markov Model (FOMM) for Process Mining issues.
                This class provides a minimal set of methods to handle with the FOMM model:
                \itemize{
-               \item \code{firstOrderMarkovModel( ...) } is the costructor
-               \item \code{loadDataset( ...) } loads data into a FOMM object
-               \item \code{trainModel() } trains a FOMM model
-               \item \code{getModel() } returns the model (XML or graphical way, via grViz script)
-               \item \code{replay( ... )} submits a set of given sequences and returns the fitting (not yet implemented for this algorithm)
-               \item \code{play( ... )} generates a wished number of sequences
-               \item \code{plot() } plots the graph
-               \item \code{distanceFrom( ... )} allows to calculate the distance between two different FOMM objects
-               \item \code{plot.delta.graph( ... ) } plots a distance graph between two given FOMM objects
+               \item \code{firstOrderMarkovModel( ) } is the costructor
+               \item \code{loadDataset( ) } loads data taken from a dataLoader::getData() method, into a FOMM object
+               \item \code{trainModel( ) } train a model using the previously loaded dataset
+               \item \code{replay( ) } re-play a given event log on the internal FOMM model
+               \item \code{play( ) } play the internal FOMM model a desired number of times, in order to simulate new event-logs. This methods can also, if desired, simulate event-logs which does not complies with the internal FOMM model.
+               \item \code{plot( ) } plot the internal model
+               \item \code{distanceFrom( ) } calculate the scalar distance to another passed FOMM model, passed as argument. The default metric returns a scalar value
+               \item \code{getModel( ) } return the trained internal FOMM model
+               \item \code{getLogObj( ) } return an XML containing the execution-log of a \code{firstOrderMarkovModel::play()}  computation
+               \item \code{getInstanceClass( ) } return the instance class Name and description (version, etc.)
+               \item \code{plot.delta.graph( ) } plot a graph, in the desired modality, representing the difference between the internal FOMM and a passed one.
+               \item \code{get.transition.Prob( ) } calculate the probability to go in a given number of transitions, from a state to another
+               \item \code{get.time.transition.Prob( ) } calculate the probability to go in a given time, from a state to another
+               \item \code{build.PWF( ) } build automatically a PWF XML definition script.
+               \item \code{findReacheableNodes( ) } and return the array containing the reacheable states, starting from the passed one.
                }
-             There are two ways to use this class: directly using the methods previously 
-             listed or via wrapping functions (called PM.<method name>). In the examples section you will find an example of both.
+             In order to better undestand the use of such methods, please visit: www.pminer.info
+             
+             The consturctor admit the following parameters:
+parameters.list a list containing possible parameters to tune the model.
 }
 \examples{
 \dontrun{
-# ----------------------------------------------- 
-#  USING THE METHODS of the class
-# ----------------------------------------------- 
-obj.L<-dataLoader();   # create a Loader
 
-# Load a .csv using "DES" and "ID" as column names to indicate events 
-# and Patient's ID
-obj.L$loader(nomeFile = "./otherFiles/test_02.csv",
-IDName = "ID",EVENTName = "DES")
+# create a Loader
+obj.L<-dataLoader();   
 
-# now create an object firstOrderMarkovModel
-obj.MM<-firstOrderMarkovModel();    
+# Load a .csv 
+obj.L$load.csv(nomeFile = "../otherFiles/mammella.csv",
+IDName = "CODICE_SANITARIO_ADT",
+EVENTName = "DESC_REPARTO_RICOVERO",
+dateColumnName = "DATA_RICOVERO")
 
-# load the data into MM model
-obj.MM$loadDataset( obj.L$getData() );  
+# get the loaded data
+dati <- obj.L$getData()
 
-# train the model
-obj.MM$trainModel();  
+# build a Second Order Marvov Model with a threshold of 0.2
+FOMM <- firstOrderMarkovModel( 
+parameters.list = list("threshold"=0.001))
 
-# plot the model 
-obj.MM$plot();  
+# load the data
+FOMM$loadDataset(dataList = dati)
 
-# -----------------------------------------------
-##  USING THE WRAPPER Functions
-# -----------------------------------------------
-# Instantiate a 'firstOrderMarkovModel' model
-obj.LD<-LD.builder()
+# train a model
+FOMM$trainModel()
 
-# Load a CSV into the loader
-LD.load.csv(loader.obj = obj.LD ,nomeFile = "./otherFiles/test_02.csv",
-   IDName = "ID",EVENTName = "DES")
+# generate 10 new processes (nb: if the 
+# threshold is too low, it can fail...)
+aaa <- FOMM$play(numberOfPlays = 10)
 
-# Instantiate a PM model
-obj.PM <-PM.builder(kindOfObject = "firstOrderMarkovModel")
+# get the transition matrix
+TranMatrix <- FOMM$getModel(kindOfOutput = "MMatrix.perc")
 
-# Load the PM model
-PM.loadDataset(PM.obj = obj.PM,dataList = LD.getData(loader.obj = obj.LD))
+# plot the model
+FOMM$plot()
 
-# train it
-PM.trainModel(PM.obj = obj.PM)
-
-# plot the model 
-PM.plot(PM.obj = obj.PM)
+# generate other 20 fake-processes
+ooo <- FOMM$play(numberOfPlays = 20)
 
 }
 }
